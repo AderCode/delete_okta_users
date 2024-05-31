@@ -28,16 +28,21 @@ This Python script automates the process of deactivating and deleting users from
     pip install -r requirements.txt
     ```
 
-3. Configure Environment Variables: Create a .env file in the root directory of the project with your Okta domain and API token:
+3. Configure Environment Variables: Add your environment variables to the .venv/bin/activate file.
 
 ```
-[Required:]
+# [Required:]
 OKTA_DOMAIN=your_okta_domain
 OKTA_API_TOKEN=your_okta_api_token
-ENVIRONMENT=target_environment (Defaults to "test") Accepts "dev", "stage", "prod", or "test"
+ENVIRONMENT=target_environment #(Defaults to "test") Accepts "dev", "stage", "prod", or "test"
 
-[Optional:]
-OKTA_RATE_LIMIT_POOL_MINIMUM=200 (Defaults to 200, User API Limit is 600 via docs)
+# [Optional:]
+OKTA_RATE_LIMIT_POOL_MINIMUM=200 #(Defaults to 200, User API Limit is 600 via docs)
+
+EXPORT OKTA_DOMAIN
+EXPORT OKTA_API_TOKEN
+EXPORT ENVIRONMENT
+EXPORT OKTA_RATE_LIMIT_POOL_MINIMUM
 ```
 
 Replace `your_okta_domain` and `your_okta_api_token` with the actual values.
