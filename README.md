@@ -64,3 +64,15 @@ Logs: All actions, including any errors, are logged to logs.txt in the logs dire
 ## Caution
 
 This script performs irreversible actions on your Okta organization. Ensure to review and understand the script's operations and test it in a safe environment before using it in production.
+
+## Manual Run SSH
+
+```
+aws ecs execute-command  \
+    --region eu-west-1 \
+    --cluster [cluster-name] \
+    --task [task id, for example 0f9de17a6465404e8b1b2356dc13c2f8] \
+    --container [container name from the task definition] \
+    --command "/bin/bash" \
+    --interactive
+```
