@@ -1,11 +1,24 @@
-FROM python:3.9-slim
-COPY ./src /app
-COPY ./requirements.txt /app
+FROM ubuntu:20.04
 
-WORKDIR /app
+ENV DEBIAN_FRONTEND noninteractive
+
+COPY ./src /okta-user-deletion
+COPY ./requirements.txt /okta-user-deletion
+
+WORKDIR /okta-user-deletion/app
+
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ARG AWS_DEFAULT_REGION
+
+RUN apt update
 RUN apt-get update
-RUN python -m pip install pip --upgrade
+RUN apt-get install -y python3-pip
+RUN python3 -m pip install pip --upgrade
 RUN pip install -r requirements.txt
+RUN aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+RUN aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+RUN aws configure set region us-east-1
 
-CMD ["tail", "-f", "/dev/null"] # Keep container open and running to allow manual execution
-# CMD ["python", "script.py"] # Auto run script.py when container starts
+# CMD ["tail", "-f", "/dev/null"] # Keep container open and running to allow manual execution
+CMD ["python3", "main.py"] # Auto run script.py when container starts
