@@ -21,3 +21,8 @@ Thumbs.db
 
 .env
 .venv
+
+# Ignore all files in ./src/input
+src/data/input/*
+src/data/output/*
+src/data/logs/*

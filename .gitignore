@@ -140,13 +140,13 @@ install_manifest.txt
 *.cmake.in
 
 # input files
-input/*.csv
-!input/test_ids.csv
+src/data/input/*
 
 # output files
-output/*
+src/data/output/*
 
 # Log files
-logs/*
+src/data/logs/*
 
+# Automation scripts
 deploy.sh
