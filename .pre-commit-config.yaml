@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: prevent-leaking-secrets
+        name: Prevent leaking secrets
+        entry: ./automation_scripts/precommit.sh
+        language: system
+        types: [file]
+        files: .*
+        pass_filenames: false
+        exclude: ^$  # Exclude all files
