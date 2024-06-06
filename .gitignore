@@ -142,6 +142,7 @@ install_manifest.txt
 # input files
 src/data/input/okta_emails/*
 src/data/input/okta_ids/*
+src/data/input/*.*
 
 # output files
 src/data/output/*

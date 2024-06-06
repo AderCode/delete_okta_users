@@ -35,5 +35,6 @@ Thumbs.db
 # Ignore all files in ./src/input
 src/data/input/okta_emails/*
 src/data/input/okta_ids/*
+src/data/input/*.*
 src/data/output/*
 src/data/logs/*

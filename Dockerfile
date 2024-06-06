@@ -20,4 +20,4 @@ RUN aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
 RUN aws configure set region us-east-1
 
 # CMD ["tail", "-f", "/dev/null"] # Keep container open and running to allow manual execution
-CMD ["python3", "-m", "app.main"] # Auto run script.py when container starts
+CMD ["python3", "-m", "src.app.main"] # Auto run script.py when container starts

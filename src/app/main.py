@@ -60,18 +60,26 @@ def check_for_file() -> None:
 def download_data_files(s3: S3Util) -> None:
     """Function to download the input CSV files from S3"""
     try:
-        s3.download_file(INPUT_IDS_CSV_PATH, f"{SRC_PATH}{INPUT_IDS_CSV_PATH}")
-        return "ids"
-    except Exception as e:
-        LOG.error("Error downloading input Okta IDs CSV file from S3: " + str(e))
+        s3.download_file(
+            CONFIG["INPUT_EXCLUDE_VALUES_CSV_PATH"],
+            f"{SRC_PATH}{CONFIG['INPUT_EXCLUDE_VALUES_CSV_PATH']}",
+        )
         try:
-            s3.download_file(
-                INPUT_EMAILS_CSV_PATH, f"{SRC_PATH}{INPUT_EMAILS_CSV_PATH}"
-            )
-            return "emails"
+            s3.download_file(INPUT_IDS_CSV_PATH, f"{SRC_PATH}{INPUT_IDS_CSV_PATH}")
+            return "ids"
         except Exception as e:
-            LOG.error("Error downloading input Okta Emails CSV file from S3: " + str(e))
-
+            LOG.error("Error downloading input Okta IDs CSV file from S3: " + str(e))
+            try:
+                s3.download_file(
+                    INPUT_EMAILS_CSV_PATH, f"{SRC_PATH}{INPUT_EMAILS_CSV_PATH}"
+                )
+                return "emails"
+            except Exception as e:
+                LOG.error("Error downloading input Okta Emails CSV file from S3: " + str(e))
+                raise e
+    except Exception as e:
+        LOG.error("Error downloading input Exclude Values CSV file from S3: " + str(e))
+        raise e
 
 def upload_logs_to_s3(s3: S3Util, log_file_path: str) -> None:
     """Function to upload the log file to S3"""
@@ -82,9 +90,8 @@ def upload_logs_to_s3(s3: S3Util, log_file_path: str) -> None:
 
 def delete_deprovisioned_user(okta: Okta, user_id: str):
     """Function to delete a deprovisioned user"""
-    LOG.debug("[MOCK] Deleting deprovisioned user with ID: " + user_id)
     try:
-        # okta.delete_user(user_id)
+        okta.delete_user(user_id)
         CONFIG["TOTAL_USERS_DELETED"] += 1
     except Exception as err:
         CONFIG["DELETE_ERROR_COUNT"] += 1
@@ -110,11 +117,24 @@ def deactivate_and_delete_user(okta: Okta, user_id: str):
         record_failed_attempt(user_id, CONFIG["FAILED_SECOND_CALL_CSV_PATH"])
         raise err
 
+def get_exclude_values():
+    """Function to get the exclude values from the environment"""
+    try:
+        exclude_values = []
+        with open(SRC_PATH + CONFIG["INPUT_EXCLUDE_VALUES_CSV_PATH"], mode="r", encoding="utf-8-sig") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for row in csv_reader:
+                exclude_values.append(row[0])
+        return exclude_values
+    except FileNotFoundError as e:
+        LOG.error("Input Exclude Values CSV file not found: " + CONFIG["INPUT_EXCLUDE_VALUES_CSV_PATH"])
+        raise e
 
 def process_emails_csv() -> None:
     """Function to process the emails CSV file"""
     okta = Okta()
     total_rows = check_total_rows(INPUT_EMAILS_CSV_PATH)
+    exclude_values = get_exclude_values()
     with open(
         SRC_PATH + INPUT_EMAILS_CSV_PATH, mode="r", encoding="utf-8-sig"
     ) as csv_file:
@@ -125,19 +145,26 @@ def process_emails_csv() -> None:
             current_row += 1
             email = str(row[0])
             percentage_done = (current_row / total_rows) * 100
+
+            if email in exclude_values:
+                LOG.info(f"Value: {email} found in exclude list. Skipping.\n")
+                CONFIG["TOTAL_USERS_SKIPPED"] += 1
+                continue
+
             LOG.info(f"Processing row {current_row}/{total_rows}")
             LOG.info("Current email: " + email)
+
             try:
                 user_response = okta.search_users(field="profile.email", value=email)
                 if user_response["status_code"] == 404:
                     LOG.info(f"User with email {email} not found in Okta")
                     CONFIG["TOTAL_USERS_NOT_FOUND"] += 1
                 elif user_response["status_code"] == 200:
-                    print("LOOK HERE!!!")
                     users = user_response['json']
-                    print("users", isinstance(users, list), users)
                     total_users = len(users)
                     LOG.info(f"Found {total_users} users with email {email}")
+                    if total_users == 0:
+                        CONFIG["TOTAL_USERS_NOT_FOUND"] += 1
                     for index, user in enumerate(users):
                         user_id = user["id"]
                         LOG.info(
@@ -160,6 +187,7 @@ def process_ids_csv() -> None:
     """Function to process the IDs CSV file"""
     okta = Okta()
     total_rows = check_total_rows(INPUT_IDS_CSV_PATH)
+    exclude_values = get_exclude_values()
     with open(
         SRC_PATH + INPUT_IDS_CSV_PATH, mode="r", encoding="utf-8-sig"
     ) as csv_file:
@@ -170,6 +198,11 @@ def process_ids_csv() -> None:
             current_row += 1
             okta_id = str(row[0])
 
+            if okta_id in exclude_values:
+                LOG.info(f"Value: {okta_id} found in exclude list. Skipping.\n")
+                CONFIG["TOTAL_USERS_SKIPPED"] += 1
+                continue
+
             # Calculate the percentage of completion
             percentage_done = (current_row / total_rows) * 100
 
@@ -177,47 +210,22 @@ def process_ids_csv() -> None:
             LOG.info(f"Processing row {current_row}/{total_rows}")
             LOG.info("Current Okta ID: " + okta_id)
 
-            step = 1 if emails_used is True else 0
-
             try:
                 user_response = okta.get_user(okta_id)  # Check if the user exists
                 if user_response["status_code"] == 404:
                     # If the user is already not in Okta, move on.
                     LOG.info(f"User {okta_id} not found in Okta")
-
                 elif user_response["status_code"] == 200:
                     user = user_response.json
+
                     # If the user is already deactivated, then move on to deleting them
                     if user["status"] == "DEPROVISIONED":
-                        step = 2
+                        delete_deprovisioned_user(okta, okta_id)
                     else:
-                        step = 1
-
-                if step == 1:
-                    deactivate_successful = okta.deactivate_user(
-                        okta_id
-                    )  # Deactivate then delete the user
-                    if deactivate_successful:
-                        CONFIG["TOTAL_USERS_DEACTIVATED"] += 1
-                        step = 2
-
-                if step == 2:
-                    okta.delete_user(okta_id)
-                    CONFIG["TOTAL_USERS_DELETED"] += 1
+                        deactivate_and_delete_user(okta, okta_id)
 
             except Exception as e:
                 LOG.error("Error processing Okta ID " + okta_id + f": {e}")
-
-                failed_attempt_csv_path = None
-                if step == 1:
-                    CONFIG["DEACTIVATION_ERROR_COUNT"] += 1
-                    failed_attempt_csv_path = CONFIG["FAILED_FIRST_CALL_CSV_PATH"]
-                elif step == 2:
-                    CONFIG["DELETE_ERROR_COUNT"] += 1
-                    failed_attempt_csv_path = CONFIG["FAILED_SECOND_CALL_CSV_PATH"]
-
-                if failed_attempt_csv_path is not None:
-                    record_failed_attempt(okta_id, failed_attempt_csv_path)
 
             LOG.info(f"Progress: ~{percentage_done:.2f}% done\n")
             CONFIG["TOTAL_ROWS_PROCESSED"] = current_row
