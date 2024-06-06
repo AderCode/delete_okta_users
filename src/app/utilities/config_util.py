@@ -25,3 +25,4 @@ elif ENVIRONMENT == "stage":
     CONFIG["INPUT_CSV_PATH"] = f"{SRC_PATH}data/input/staging_ids.csv"
 elif ENVIRONMENT == "prod":
     CONFIG["INPUT_CSV_PATH"] = f"{SRC_PATH}data/input/prod_ids.csv"
+
