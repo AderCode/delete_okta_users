@@ -140,7 +140,8 @@ install_manifest.txt
 *.cmake.in
 
 # input files
-src/data/input/*
+src/data/input/okta_emails/*
+src/data/input/okta_ids/*
 
 # output files
 src/data/output/*

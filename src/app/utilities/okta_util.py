@@ -44,6 +44,12 @@ class Okta:
             "json": response.json(),
         }
         return data
+    
+    def search_users(self, field: str, value: str):
+        """Function to search users"""
+        endpoint = f"{self.base_url}/users?filter={field} eq \"{value}\""
+        response = self._api(endpoint, "GET")
+        return response
 
     def get_user(self, okta_id):
         """Function to get user details"""
