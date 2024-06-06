@@ -1,0 +1,12 @@
+/**
+ * The `.gitkeep` file is used to keep an empty directory tracked by Git.
+ * Git does not track empty directories by default, so the `.gitkeep` file is added
+ * to indicate that the directory should be kept even if it is empty.
+ * 
+ * This convention is commonly used to preserve the directory structure and ensure
+ * that the empty directory is included when cloning or checking out the repository.
+ * 
+ * It's important to note that the `.gitkeep` file itself does not have any special
+ * meaning to Git. It is simply a convention used by developers to indicate the
+ * intention of keeping an empty directory in the repository.
+ */

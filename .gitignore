@@ -139,16 +139,27 @@ install_manifest.txt
 *.cmake
 *.cmake.in
 
+# Terraform
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/.terraform.lock.hcl
+plan
+plan.tfgraph
+
 # input files
 src/data/input/okta_emails/*
 src/data/input/okta_ids/*
 src/data/input/*.*
 
 # output files
-src/data/output/*
+src/data/output/**/*.csv
 
 # Log files
 src/data/logs/*
 
 # Automation scripts
 deploy.sh
+
