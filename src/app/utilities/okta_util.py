@@ -2,10 +2,10 @@
 
 import time
 from datetime import datetime
-from .http_util import HttpUtil
-from .logging_util import Logger
-from .env_util import Env
-from .config_util import CONFIG
+from src.app.utilities.http_util import HttpUtil
+from src.app.utilities.logging_util import Logger
+from src.app.utilities.env_util import Env
+from src.app.utilities.config_util import CONFIG
 
 OKTA_DOMAIN = Env.get("OKTA_DOMAIN")
 OKTA_API_TOKEN = Env.get("OKTA_API_KEY")

@@ -1,8 +1,8 @@
 """Module to interact with S3"""
 
 import boto3
-from .env_util import Env
-from .logging_util import Logger
+from src.app.utilities.env_util import Env
+from src.app.utilities.logging_util import Logger
 
 
 class S3Util:

@@ -3,24 +3,25 @@
 
 # pylint: disable= C0301, W0718, C0103, C0411, W0621, W0612
 
+import os
 import csv
+import importlib.util
 
-from utilities.okta_util import Okta
-from utilities.logging_util import Logger
-from utilities.env_util import Env
-from utilities.s3_util import S3Util
-from utilities.config_util import CONFIG
-from utilities.reporting_util import ReportingUtil
-from utilities.error_util import record_failed_attempt
-
-LOG = Logger("main.py", CONFIG["FILENAME_TIMESTAMP"])
+from .utilities.okta_util import Okta
+from .utilities.logging_util import Logger
+from .utilities.env_util import Env
+from .utilities.s3_util import S3Util
+from .utilities.config_util import CONFIG
+from .utilities.reporting_util import ReportingUtil
+from .utilities.error_util import record_failed_attempt
+LOG = Logger("main.py")
 
 # Main function to process the CSV and delete users
 def main():
     """Main function to process the CSV and delete users"""
     reporting = ReportingUtil()
     reporting.start()
-    
+
     # Check if S3 is enabled
     s3_enabled = bool(Env.get("TARGET_S3_BUCKET"))
     if s3_enabled:
@@ -31,21 +32,21 @@ def main():
     # If S3 is enabled check for a input csv file and download it
     if s3_enabled:
         try:
-            s3.download_file(input_csv_path, f"../{input_csv_path}")
+            s3.download_file(input_csv_path, f"{CONFIG['SRC_PATH']}{input_csv_path}")
         except Exception as e:
             LOG.error("Error downloading input CSV file from S3: " + str(e))
 
     # Check file exists
-    LOG.info("Checking if input CSV file exists: " + "../" + input_csv_path)
+    LOG.info("Checking if input CSV file exists: " + input_csv_path)
     try:
-        with open("../" + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
+        with open(CONFIG["SRC_PATH"] + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
             pass
     except FileNotFoundError:
-        LOG.error("Input CSV file not found: " + "../" + input_csv_path)
+        LOG.error("Input CSV file not found: " + input_csv_path)
         return
 
     # First, determine the total number of rows in the CSV
-    with open("../" + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
+    with open(CONFIG["SRC_PATH"] + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
         total_rows = sum(
             1 for row in csv.reader(csv_file)
         )  # Count the number of rows in the CSV file
@@ -55,7 +56,7 @@ def main():
     okta = Okta()
     
     # Process the CSV file
-    with open("../" + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
+    with open(CONFIG["SRC_PATH"] + input_csv_path, mode="r", encoding="utf-8-sig") as csv_file:
         csv_reader = csv.reader(csv_file)
         current_row = 0  # Initialize current row counter
 
@@ -121,10 +122,15 @@ def main():
     # If S3 is enabled, upload the log file
     if s3_enabled:
         s3_path = f"{CONFIG['LOG_FILE_PATH']}"
-        local_log_file_path = f"../{s3_path}"
+        local_log_file_path = f"{CONFIG['SRC_PATH']}{s3_path}"
         with open(local_log_file_path, "rb") as data:
             s3.upload_fileobj(s3_path, data)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        LOG.error("An error occurred: " + str(e))
+        raise e
+

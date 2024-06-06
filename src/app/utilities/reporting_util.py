@@ -3,8 +3,8 @@
 import time
 from datetime import datetime
 from os import environ
-from .logging_util import Logger
-from .config_util import CONFIG
+from src.app.utilities.logging_util import Logger
+from src.app.utilities.config_util import CONFIG
 
 CONFIG_SETUP_DEFAULTS = {
     "TOTAL_ROWS": 0,
@@ -62,7 +62,7 @@ class ReportingUtil:
         if data is None:
             data = CONFIG
 
-        runtime_minutes = (self.end_time - self.start_time) / 60
+        runtime_minutes = max(1, (self.end_time - self.start_time) / 60)
         report = "\n".join(
             [
                 "\nStats:",
@@ -71,7 +71,7 @@ class ReportingUtil:
                 f"    Total rows processed: {data['TOTAL_ROWS']}",
                 f"    Average rows per minute: {data['TOTAL_ROWS'] / runtime_minutes}",
                 f"    Total Okta API requests made: {data['TOTAL_OKTA_API_CALLS']}",
-                f"    Average Okta API requests per minute: {data['TOTAL_OKTA_API_CALLS'] / runtime_minutes }",
+                f"    Average Okta API requests per minute: {data['TOTAL_OKTA_API_CALLS'] / runtime_minutes}",
                 f"    Total errors: {data['DEACTIVATION_ERROR_COUNT'] + data['DELETE_ERROR_COUNT']}",
                 f"        Total Deactivate Error count: {data['DEACTIVATION_ERROR_COUNT']}",
                 f"        Total Delete Error count: {data['DELETE_ERROR_COUNT']}",

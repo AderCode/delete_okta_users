@@ -2,7 +2,8 @@
 
 import re
 from datetime import datetime
-from .env_util import Env
+from src.app.utilities.env_util import Env
+from src.app.utilities.config_util import CONFIG
 
 
 class Logger:
@@ -11,15 +12,11 @@ class Logger:
     def __init__(
         self,
         name: str = "logging_util.py",
-        filename_timestamp: str = datetime.now().strftime("%Y%m%d%H%M%S"),
     ):
         self.name = name
         self.logging_colors_enabled = bool(Env.get("ENABLE_LOGGING_COLORS"))
         self.logging_disabled = bool(Env.get("DISABLE_LOGGER"))
-        self.filename_timestamp = filename_timestamp
-        self.log_file_path = (
-            f"../data/logs/logs_{Env.get('ENVIRONMENT')}_{self.filename_timestamp}.txt"
-        )
+        self.log_file_path = CONFIG["SRC_PATH"] + CONFIG["LOG_FILE_PATH"]
 
     def info(self, message: str) -> None:
         """Function to log info messages"""

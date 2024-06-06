@@ -1,7 +1,7 @@
 """Module to interact with HTTP API"""
 
 import requests
-from .logging_util import Logger
+from src.app.utilities.logging_util import Logger
 
 
 class HttpUtil:

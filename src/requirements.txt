@@ -1,10 +1,4 @@
-pytest
-pytest-env
-pylint
-moto
 awscli
 boto3
 requests>=2.25.1
 urllib3<2
-
-
